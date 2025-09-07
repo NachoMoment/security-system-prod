@@ -1,0 +1,9 @@
+menu "App Config"
+    config APP_ESPNOW_CHANNEL
+        int "ESPNOW fixed channel"
+        range 1 14
+        default 1
+        help
+            Primary Wi-Fi channel to lock the STA interface to for ESP-NOW RX.
+            Your PIR sender must transmit on the same channel.
+endmenu

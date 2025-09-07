@@ -1,0 +1,60 @@
+# ---- Build outputs (out-of-source and IDE build dirs)
+build/
+build-*/
+cmake-build*/
+
+# ---- ESP-IDF / Component Manager
+managed_components/
+# If you want reproducible dependency pinning, commit dependencies.lock.
+# Otherwise, uncomment the next line to ignore it:
+# dependencies.lock
+
+# ---- Generated SDK configs (keep your sdkconfig.defaults*)
+sdkconfig
+sdkconfig.old
+
+# ---- Firmware & link artifacts
+*.bin
+*.elf
+*.map
+*.lst
+*.dmp
+*.dump
+
+# ---- C/C++ intermediates
+*.o
+*.obj
+*.a
+*.d
+*.gcno
+*.gcda
+
+# ---- CMake byproducts (in case anyone runs in-source builds)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# ---- Tool caches
+.espressif/
+.cache/
+.ccache/
+
+# ---- PlatformIO (if someone opens it that way)
+.pio/
+
+# ---- Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- Python convenience
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# ---- Logs
+*.log
