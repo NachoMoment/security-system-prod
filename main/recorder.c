@@ -27,6 +27,8 @@
 #include "record_gate.h"
 #include "app_camera_esp.h"
 
+#include "esp_timer.h"
+
 #ifndef GPIO_NUM_NC
 #define GPIO_NUM_NC ((gpio_num_t)-1)
 #endif
@@ -42,6 +44,16 @@ static const char *SD_MOUNT_PT = "/sdcard";
 static sdmmc_card_t *s_card   = NULL;
 static bool          s_sd_ok  = false;
 static atomic_bool   s_recording = false;
+
+#ifndef RECORD_COOLDOWN_MS
+#define RECORD_COOLDOWN_MS 9000   // 9s tweak as needed
+#endif
+
+static int64_t s_last_record_start_us = 0;
+
+static inline int64_t now_ms(void) {
+  return esp_timer_get_time() / 1000;  // monotonic ms since boot
+}
 
 static void log_heap(const char* where) {
   multi_heap_info_t a={0}, b={0};
@@ -226,8 +238,26 @@ esp_err_t recorder_init(void) {
 bool recorder_is_recording(void) { return atomic_load(&s_recording); }
 
 esp_err_t recorder_start(void) {
+  // Already recording? no-op
   if (atomic_exchange(&s_recording, true)) return ESP_OK;
-  ESP_LOGI(TAG, "recorder_start()");
+
+  // Cooldown check (monotonic time)
+  const int64_t now = now_ms();
+  const int64_t last = s_last_record_start_us;
+  const int64_t elapsed = (last > 0) ? (now - last) : INT64_MAX;
+
+  if (last > 0 && elapsed < RECORD_COOLDOWN_MS) {
+    const int64_t remain = RECORD_COOLDOWN_MS - elapsed;
+    ESP_LOGI(TAG, "recorder_start() suppressed by cooldown: %lld ms remaining",
+             (long long)remain);
+    atomic_store(&s_recording, false);   // release the recording flag since we didn't start
+    return ESP_OK;                       // not an error; intentional suppression
+  }
+
+  // Accept this start attempt and begin cooldown window now
+  s_last_record_start_us = now;
+
+  ESP_LOGI(TAG, "recorder_start() (cooldown passed)");
   rec_gate_reset();
 
   (void)ensure_sd();                 // retry mount every time we start
